@@ -62,8 +62,35 @@
             box-shadow: 0 0 0 2px rgba(52,131,250,0.2); 
         }
 
+        /* Botón primario Meli */
+        .btn-primary {
+            width: 100%;
+            background-color: #3483fa;
+            color: #ffffff;
+            border: none;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 24px;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover { background-color: #2968c8; }
+
+        /* Etiquetas de los productos pendientes */
+        .lista-items { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .item-badge {
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            color: #666;
+        }
+
         /* Textos dinámicos */
-        .oculto { display: none; }
+        .oculto { display: none !important; }
         .status-text { margin-top: 12px; font-size: 15px; }
         .info-highlight { color: #3483fa; font-weight: 600; }
         .exito { color: #00a650; font-weight: 600; font-size: 18px; }
@@ -82,7 +109,7 @@
 </div>
 
 <div class="main-container">
-    <div class="breadcrumb">Volver a inicio > Auditoría High Value</div>
+    <div class="breadcrumb" id="btn-breadcrumb">Volver a inicio > Auditoría High Value</div>
     
     <h1 class="page-title">Validación de Contenedor</h1>
 
@@ -111,15 +138,67 @@
         
         <hr>
         
-        <div style="display: flex; justify-content: space-between; font-size: 16px;">
-            <span style="color: #666;">Productos pendientes:</span>
+        <div style="display: flex; justify-content: space-between; font-size: 16px; align-items: center;">
+            <span style="color: #666; font-weight: 600;">Cant. Productos pendientes:</span>
             <span id="contador" class="info-highlight" style="font-size: 20px;">0</span>
         </div>
+
+        <!-- Lista visual de Melis -->
+        <div id="contenedor-lista" style="margin-top: 16px;">
+            <span style="font-size: 14px; color: #999;">IDs esperados:</span>
+            <div id="lista-pendientes" class="lista-items">
+                <!-- Aquí se insertan los IDs con JS -->
+            </div>
+        </div>
+
+        <!-- Botón para regresar al inicio -->
+        <button id="btn-reiniciar" class="btn-primary">Auditar otro MU</button>
+
     </div>
 </div>
 
 <script>
     let inventarioEsperado = [];
+
+    // Función para dibujar las etiquetas de los IDs faltantes
+    function actualizarListaVisual() {
+        const contenedorLista = document.getElementById('lista-pendientes');
+        contenedorLista.innerHTML = ''; // Limpiar lista actual
+        
+        inventarioEsperado.forEach(item => {
+            const span = document.createElement('span');
+            span.className = 'item-badge';
+            span.innerText = item.INVENTORY_ID;
+            contenedorLista.appendChild(span);
+        });
+    }
+
+    // Función para reiniciar toda la pantalla (Volver al Inicio)
+    function volverAlInicio() {
+        inventarioEsperado = [];
+        
+        // Limpiar Fase 1
+        document.getElementById('input-mu').value = '';
+        document.getElementById('mensaje-sistema').innerHTML = '';
+        
+        // Limpiar Fase 2
+        document.getElementById('input-producto').value = '';
+        document.getElementById('input-producto').disabled = false;
+        document.getElementById('input-producto').placeholder = "Escanea INVENTORY_ID o código universal...";
+        document.getElementById('alerta-producto').innerHTML = '';
+        document.getElementById('lista-pendientes').innerHTML = '';
+        
+        // Cambiar pantallas
+        document.getElementById('fase-productos').classList.add('oculto');
+        document.getElementById('fase-tote').classList.remove('oculto');
+        
+        // Enfocar el input del MU para mayor velocidad
+        document.getElementById('input-mu').focus();
+    }
+
+    // Asignar evento al botón grande y al texto del breadcrumb
+    document.getElementById('btn-reiniciar').addEventListener('click', volverAlInicio);
+    document.getElementById('btn-breadcrumb').addEventListener('click', volverAlInicio);
 
     // FASE 1: Escaneo del MU
     document.getElementById('input-mu').addEventListener('keypress', async function(e) {
@@ -133,11 +212,9 @@
                 // ==========================================
                 // NUEVA LÓGICA: Leer directamente desde GitHub
                 // ==========================================
-                // Agregamos un timestamp para evitar que el navegador guarde el archivo viejo en caché (memoria)
                 const respuesta = await fetch('datos_totes.json?v=' + new Date().getTime());
                 const todosLosDatos = await respuesta.json();
 
-                // Filtramos la lista gigante para quedarnos solo con los productos del MU escaneado
                 inventarioEsperado = todosLosDatos.filter(item => item.TOTE_ID === mu);
 
                 if (inventarioEsperado && inventarioEsperado.length > 0) {
@@ -145,6 +222,9 @@
                     document.getElementById('fase-productos').classList.remove('oculto');
                     document.getElementById('mu-activo').innerText = mu;
                     document.getElementById('contador').innerText = inventarioEsperado.length;
+                    
+                    // Renderizar la lista de Melis
+                    actualizarListaVisual();
                     
                     document.getElementById('input-producto').focus(); 
                 } else {
@@ -169,8 +249,13 @@
             const alerta = document.getElementById('alerta-producto');
 
             if (indice !== -1) {
+                // Eliminar el producto de nuestra lista lógica
                 inventarioEsperado.splice(indice, 1);
+                
+                // Actualizar contadores y etiquetas visuales
                 document.getElementById('contador').innerText = inventarioEsperado.length;
+                actualizarListaVisual();
+
                 alerta.innerHTML = "<span class='exito'>✔️ Código verificado correctamente.</span>";
                 
                 if (inventarioEsperado.length === 0) {
