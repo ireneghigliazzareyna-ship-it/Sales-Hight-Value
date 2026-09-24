@@ -3,55 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auditoría HV - Mercado Libre</title>
+    <title>WMS - Auditoría HV</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
-        .contenedor { background: white; max-width: 500px; margin: auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input { width: 90%; padding: 15px; margin-top: 10px; border: 2px solid #009ee3; border-radius: 5px; font-size: 18px; outline: none; }
+        /* Tipografía y reset básico estilo Meli */
+        body { 
+            margin: 0; 
+            font-family: "Proxima Nova", -apple-system, Roboto, Arial, sans-serif; 
+            background-color: #ebebeb; 
+            color: #333333; 
+        }
+        
+        /* Barra superior amarilla oficial */
+        .header-meli { 
+            background-color: #ffe600; 
+            height: 56px; 
+            display: flex; 
+            align-items: center; 
+            padding: 0 20px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+        }
+        .header-meli .menu-icon { font-size: 24px; margin-right: 15px; cursor: pointer; }
+        .header-meli .logo-text { font-weight: 900; font-size: 18px; color: #2d3277; letter-spacing: -0.5px;}
+
+        /* Contenedor principal */
+        .main-container { padding: 24px; max-width: 800px; margin: 0 auto; }
+        
+        /* Breadcrumb (Navegación) */
+        .breadcrumb { font-size: 14px; color: #3483fa; margin-bottom: 20px; cursor: pointer; }
+        
+        /* Título de la página */
+        .page-title { font-size: 24px; font-weight: 600; margin-top: 0; margin-bottom: 24px; color: #333; }
+
+        /* Estilo de las tarjetas (Cards) del WMS */
+        .card { 
+            background: #ffffff; 
+            border-radius: 6px; 
+            padding: 24px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); 
+            border: 1px solid #e6e6e6;
+            margin-bottom: 20px;
+        }
+
+        /* Inputs de texto */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #4a4a4a; }
+        .input-meli { 
+            width: 100%; 
+            box-sizing: border-box; 
+            padding: 14px 16px; 
+            border: 1px solid #cccccc; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            transition: border-color 0.2s, box-shadow 0.2s; 
+            outline: none;
+        }
+        .input-meli:focus { 
+            border-color: #3483fa; 
+            box-shadow: 0 0 0 2px rgba(52,131,250,0.2); 
+        }
+
+        /* Textos dinámicos */
         .oculto { display: none; }
-        .exito { color: #00a650; font-weight: bold; font-size: 20px; }
-        .error { color: #f23d4f; font-weight: bold; font-size: 20px; }
-        .header-ml { color: #2d3277; text-align: center; }
+        .status-text { margin-top: 12px; font-size: 15px; }
+        .info-highlight { color: #3483fa; font-weight: 600; }
+        .exito { color: #00a650; font-weight: 600; font-size: 18px; }
+        .error { color: #f23d4f; font-weight: 600; font-size: 18px; }
+        
+        /* Divisor interior */
+        hr { border: 0; border-top: 1px solid #eeeeee; margin: 24px 0; }
     </style>
 </head>
 <body>
 
-<div class="contenedor">
-    <h2 class="header-ml">Validación de MU (HV)</h2>
+<!-- Header amarillo -->
+<div class="header-meli">
+    <div class="menu-icon">☰</div>
+    <div class="logo-text">mercado libre | WMS</div>
+</div>
+
+<div class="main-container">
+    <div class="breadcrumb">Volver a inicio > Auditoría High Value</div>
+    
+    <h1 class="page-title">Validación de Contenedor</h1>
 
     <!-- FASE 1: Escaneo del Tote -->
-    <div id="fase-tote">
-        <label><b>1. Escanea el Tote (MU):</b></label>
-        <input type="text" id="input-mu" placeholder="Ej. MU-12345" autofocus>
-        <p id="mensaje-sistema"></p>
+    <div class="card" id="fase-tote">
+        <div class="form-group">
+            <label>1. Escanea el código del MU (Tote):</label>
+            <input type="text" id="input-mu" class="input-meli" placeholder="Ej. MU-TT-RC-2A0-812" autofocus>
+        </div>
+        <div id="mensaje-sistema" class="status-text"></div>
     </div>
 
     <!-- FASE 2: Escaneo de Productos -->
-    <div id="fase-productos" class="oculto">
-        <h3>Tote Activo: <span id="mu-activo" style="color:#009ee3;"></span></h3>
-        <label><b>2. Escanea las Melis físicas:</b></label>
-        <input type="text" id="input-producto" placeholder="Escanea etiqueta o código universal...">
+    <div class="card oculto" id="fase-productos">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <span style="font-size: 16px; color: #666;">Contenedor Activo:</span>
+            <span id="mu-activo" style="font-size: 18px; background: #f0f4ff; padding: 4px 12px; border-radius: 4px; color: #3483fa; font-weight: 600;"></span>
+        </div>
+
+        <div class="form-group">
+            <label>2. Escanea las Melis físicas:</label>
+            <input type="text" id="input-producto" class="input-meli" placeholder="Escanea INVENTORY_ID o código universal...">
+        </div>
         
-        <p id="alerta-producto"></p>
+        <div id="alerta-producto" class="status-text" style="min-height: 24px;"></div>
         
         <hr>
-        <h4>Productos pendientes por escanear: <span id="contador">0</span></h4>
+        
+        <div style="display: flex; justify-content: space-between; font-size: 16px;">
+            <span style="color: #666;">Productos pendientes:</span>
+            <span id="contador" class="info-highlight" style="font-size: 20px;">0</span>
+        </div>
     </div>
 </div>
 
 <script>
     let inventarioEsperado = [];
 
-    // Detectar cuando la Handheld escanea el Tote y da "Enter"
+    // FASE 1: Escaneo del MU
     document.getElementById('input-mu').addEventListener('keypress', async function(e) {
         if (e.key === 'Enter') {
             const mu = this.value.trim();
             if (!mu) return;
 
-            document.getElementById('mensaje-sistema').innerText = "⏳ Buscando en BigQuery...";
+            document.getElementById('mensaje-sistema').innerHTML = "⏳ Consultando base de datos...";
             
             try {
-                // Aquí está tu URL de Verdi conectada
+                // ==========================================
+                // TU WEBHOOK DE VERDI (Valídalo aquí)
+                // ==========================================
                 const urlVerdi = 'https://web.furycloud.io/api/proxy/verdi_flows/webhook-test/2e655298-185e-4be5-b892-cd39b5d9bc47'; 
                 
                 const respuesta = await fetch(urlVerdi, {
@@ -70,15 +151,15 @@
                     
                     document.getElementById('input-producto').focus(); 
                 } else {
-                    document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>No se encontraron datos para este MU.</span>";
+                    document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>No se encontraron registros para este MU en MXNL01.</span>";
                 }
             } catch (error) {
-                document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>Error conectando con Fury/Verdi.</span>";
+                document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>Error de conexión con Fury/Verdi.</span>";
             }
         }
     });
 
-    // Detectar cuando la Handheld escanea un Producto (Meli) y da "Enter"
+    // FASE 2: Escaneo de Meli
     document.getElementById('input-producto').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             const codigoEscaneado = this.value.trim();
@@ -93,14 +174,15 @@
             if (indice !== -1) {
                 inventarioEsperado.splice(indice, 1);
                 document.getElementById('contador').innerText = inventarioEsperado.length;
-                alerta.innerHTML = "<span class='exito'>¡Correcto! ✔️</span>";
+                alerta.innerHTML = "<span class='exito'>✔️ Código verificado correctamente.</span>";
                 
                 if (inventarioEsperado.length === 0) {
-                    alerta.innerHTML = "<span class='exito'>🎉 ¡MU COMPLETO! Auditoría Exitosa.</span>";
+                    alerta.innerHTML = "<span class='exito'>🎉 ¡AUDITORÍA COMPLETADA! MU sin sobrantes ni faltantes.</span>";
                     this.disabled = true; 
+                    this.placeholder = "Auditoría finalizada";
                 }
             } else {
-                alerta.innerHTML = "<span class='error'>❌ ¡ALTO! Producto Cruzado</span>";
+                alerta.innerHTML = "<span class='error'>❌ ALERTA: Producto Cruzado (No pertenece a este MU)</span>";
             }
         }
     });
