@@ -127,21 +127,18 @@
             const mu = this.value.trim();
             if (!mu) return;
 
-            document.getElementById('mensaje-sistema').innerHTML = "⏳ Consultando base de datos...";
+            document.getElementById('mensaje-sistema').innerHTML = "⏳ Consultando datos...";
             
             try {
                 // ==========================================
-                // URL DE PRODUCCIÓN DE VERDI CONFIGURADA
+                // NUEVA LÓGICA: Leer directamente desde GitHub
                 // ==========================================
-                const urlVerdi = 'https://verdi-flows.melisystems.com/webhook/2e655298-185e-4be5-b892-cd39b5d9bc47'; 
-                
-                const respuesta = await fetch(urlVerdi, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mu: mu })
-                });
+                // Agregamos un timestamp para evitar que el navegador guarde el archivo viejo en caché (memoria)
+                const respuesta = await fetch('datos_totes.json?v=' + new Date().getTime());
+                const todosLosDatos = await respuesta.json();
 
-                inventarioEsperado = await respuesta.json();
+                // Filtramos la lista gigante para quedarnos solo con los productos del MU escaneado
+                inventarioEsperado = todosLosDatos.filter(item => item.TOTE_ID === mu);
 
                 if (inventarioEsperado && inventarioEsperado.length > 0) {
                     document.getElementById('fase-tote').classList.add('oculto');
@@ -151,10 +148,10 @@
                     
                     document.getElementById('input-producto').focus(); 
                 } else {
-                    document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>No se encontraron registros para este MU en MXNL01.</span>";
+                    document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>No se encontraron registros para este MU.</span>";
                 }
             } catch (error) {
-                document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>Error de conexión con Fury/Verdi.</span>";
+                document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>Aún no hay datos disponibles o error de carga.</span>";
             }
         }
     });
