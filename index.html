@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría HV - Mercado Libre</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px; }
+        .contenedor { background: white; max-width: 500px; margin: auto; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { width: 90%; padding: 15px; margin-top: 10px; border: 2px solid #009ee3; border-radius: 5px; font-size: 18px; outline: none; }
+        .oculto { display: none; }
+        .exito { color: #00a650; font-weight: bold; font-size: 20px; }
+        .error { color: #f23d4f; font-weight: bold; font-size: 20px; }
+        .header-ml { color: #2d3277; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="contenedor">
+    <h2 class="header-ml">Validación de MU (HV)</h2>
+
+    <!-- FASE 1: Escaneo del Tote -->
+    <div id="fase-tote">
+        <label><b>1. Escanea el Tote (MU):</b></label>
+        <input type="text" id="input-mu" placeholder="Ej. MU-12345" autofocus>
+        <p id="mensaje-sistema"></p>
+    </div>
+
+    <!-- FASE 2: Escaneo de Productos -->
+    <div id="fase-productos" class="oculto">
+        <h3>Tote Activo: <span id="mu-activo" style="color:#009ee3;"></span></h3>
+        <label><b>2. Escanea las Melis físicas:</b></label>
+        <input type="text" id="input-producto" placeholder="Escanea etiqueta o código universal...">
+        
+        <p id="alerta-producto"></p>
+        
+        <hr>
+        <h4>Productos pendientes por escanear: <span id="contador">0</span></h4>
+    </div>
+</div>
+
+<script>
+    let inventarioEsperado = [];
+
+    // Detectar cuando la Handheld escanea el Tote y da "Enter"
+    document.getElementById('input-mu').addEventListener('keypress', async function(e) {
+        if (e.key === 'Enter') {
+            const mu = this.value.trim();
+            if (!mu) return;
+
+            document.getElementById('mensaje-sistema').innerText = "⏳ Buscando en BigQuery...";
+            
+            try {
+                // Aquí está tu URL de Verdi conectada
+                const urlVerdi = 'https://web.furycloud.io/api/proxy/verdi_flows/webhook-test/2e655298-185e-4be5-b892-cd39b5d9bc47'; 
+                
+                const respuesta = await fetch(urlVerdi, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mu: mu })
+                });
+
+                inventarioEsperado = await respuesta.json();
+
+                if (inventarioEsperado && inventarioEsperado.length > 0) {
+                    document.getElementById('fase-tote').classList.add('oculto');
+                    document.getElementById('fase-productos').classList.remove('oculto');
+                    document.getElementById('mu-activo').innerText = mu;
+                    document.getElementById('contador').innerText = inventarioEsperado.length;
+                    
+                    document.getElementById('input-producto').focus(); 
+                } else {
+                    document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>No se encontraron datos para este MU.</span>";
+                }
+            } catch (error) {
+                document.getElementById('mensaje-sistema').innerHTML = "<span class='error'>Error conectando con Fury/Verdi.</span>";
+            }
+        }
+    });
+
+    // Detectar cuando la Handheld escanea un Producto (Meli) y da "Enter"
+    document.getElementById('input-producto').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const codigoEscaneado = this.value.trim();
+            this.value = ''; 
+            
+            const indice = inventarioEsperado.findIndex(item => 
+                item.INVENTORY_ID === codigoEscaneado || item.ITE_VARIATION_ID === codigoEscaneado
+            );
+
+            const alerta = document.getElementById('alerta-producto');
+
+            if (indice !== -1) {
+                inventarioEsperado.splice(indice, 1);
+                document.getElementById('contador').innerText = inventarioEsperado.length;
+                alerta.innerHTML = "<span class='exito'>¡Correcto! ✔️</span>";
+                
+                if (inventarioEsperado.length === 0) {
+                    alerta.innerHTML = "<span class='exito'>🎉 ¡MU COMPLETO! Auditoría Exitosa.</span>";
+                    this.disabled = true; 
+                }
+            } else {
+                alerta.innerHTML = "<span class='error'>❌ ¡ALTO! Producto Cruzado</span>";
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
